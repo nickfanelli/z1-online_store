@@ -29,7 +29,7 @@ This project implements a simple backend for an online store selling digital pro
    ```
 
    ```bash
-   node dist/index.ts
+   node dist/index.js
 
    The server starts listening on `http://localhost:3000/`
 
@@ -40,20 +40,21 @@ Use a tool such as Postman or cURL to hit the endpoints
 ### Routes
 
 ### Products
-| No | Method | Route                  | Description                     | Attributs                  |
-|----|--------|------------------------|---------------------------------|----------------------------|
-| 1  | GET    | /products              | View product inventory          |                            |
-| 2  | POST   | /products              | Add product to inventory        |{body: name, price, stock}  |
+| No | Method | Route                  | Description                     | Attributes                          |
+|----|--------|------------------------|---------------------------------|-------------------------------------|
+| 1  | GET    | /products              | View product inventory          |                                     |
+| 2  | POST   | /products              | Add product to inventory        |{body: name, price, stock}           |
+| 3  | PATCH  | /products              | Update products' details        |{body: items: [{name, price, stock}]}|
 
 ### Cart
-| No | Method | Route                  | Description                     | Attributs                  |
+| No | Method | Route                  | Description                     | Attributes                 |
 |----|--------|------------------------|---------------------------------|----------------------------|
 | 1  | GET    | /cart/:clientId        | View client cart                |                            |
 | 2  | POST   | /cart/:clientId/add    | Add product to client cart      |{body: productId, quantity} |
-| 3  | POST   | /cart/:client1/remove  | Remove product from client cart |{body: productId}           |
-| 4  | POST   | /cart/:client1/clear   | Clear client cart client cart   |                            |
+| 3  | POST   | /cart/:clientId/remove | Remove product from client cart |{body: productId}           |
+| 4  | POST   | /cart/:clientId/clear  | Clear client cart client cart   |                            |
 
 ### Order
-| No | Method | Route           | Description             | Attributs                                      |
+| No | Method | Route           | Description             | Attributes                                     |
 |----|--------|-----------------|-------------------------|------------------------------------------------|
 | 1  | POST   | /orders         | Submit purchase order   |{body: clientId, items: [{productId, quantity}]}|
