@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import Product from "../models/productModel";
-// import Cart from "../models/cartModel"
-// import CartItem from "../models/cartItemModel"
+import Cart from "../models/cartModel"
+import CartItem from "../models/cartItemModel"
 import Order from "../models/orderModel";
-// import { CartController } from "./cartController";
 import sequelize from "../db";
 
 export const createOrder = async (req: Request, res: Response): Promise<void> => {
@@ -14,43 +13,40 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       throw new Error(`Can't process order from undefined client.`);
     }
 
-    // I wanted to infer the order items from a client's cart. But I couldn't resolve TypeScript's
-    // "inability" to recognize that a Cart could have a CartItem list, even though the association is defined
-    // in the model
-  //   const clientCart = await Cart.findOne({ where: { clientId }, include: [CartItem] });
-  //   if(!clientCart) {
-  //     throw new Error(`Cart not found.`);
-  //     return;
-  //   }
-
-    
-    const { items } = req.body; // Array of { productId, quantity }
-    if (!items || items.length === 0) {
-      res.status(400).json({ message: "Can't process an empty order." });
-      return;
+    // Purchase order is inferred from previously populated client's cart
+    const clientCart = await Cart.findOne({ where: { clientId }, include: [CartItem] });
+    if (!clientCart) {
+      throw new Error(`Cart not found for this order.`);
     }
-    
-    let total = 0;
 
-    // Validate stock and calculate total price
-    for (const item of items) {
-      const product = await Product.findByPk(item.productId, { transaction });
+    if(!clientCart.CartItems || clientCart.CartItems.length === 0) {
+      throw new Error(`Can't complete an order for an empty cart.`);
+    }
+
+    let total = 0;
+    let items: {productId: number, quantity: number}[] = [];
+
+    for (const cartItem of clientCart.CartItems) {
+      const product = await Product.findByPk(cartItem.productId, { transaction });
       if (!product) {
-        throw new Error(`Product with ID ${item.productId} not found.`);
+        throw new Error(`Product with ID ${cartItem.productId} not found.`);
       }
 
-      if (product.stock < item.quantity) {
+      // Validate stock
+      if (product.stock < cartItem.quantity) {
         throw new Error(
-          `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`
+          `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${cartItem.quantity}`
         );
       }
 
       // Update stock
-      product.stock -= item.quantity;
+      product.stock -= cartItem.quantity;
       await product.save({ transaction });
 
+      items.push({productId: product.id, quantity: cartItem.quantity})
+
       // Calculate total
-      total += product.price * item.quantity;
+      total += product.price * cartItem.quantity;
     }
 
     // Create order
@@ -63,11 +59,7 @@ export const createOrder = async (req: Request, res: Response): Promise<void> =>
       { transaction }
     );
 
-    // Clear client's cart
-  //   req.params.clientId = clientId;
-  //   await CartController.clearCart(req, res)
-      // clearCart() method is not executing properly because the database is locked (due to the transaction)
-      // I probably need to pass the transaction object like it's done with sequelize objects
+    // Clear client's cart ... maybe?
 
     // Commit transaction
     await transaction.commit();

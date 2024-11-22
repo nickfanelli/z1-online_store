@@ -19,9 +19,7 @@ Product.init(
 );
 
 // Simple seeding for testing & playing
-export async function seedProducts() {
-    let productsInventory: Product[] = []
-    
+export async function seedProducts() {    
     const p1 =  await Product.create({
         name: "Sample item",
         price: 10,
@@ -39,11 +37,9 @@ export async function seedProducts() {
         price: 100,
         stock: 1
     });
-
     
-    productsInventory.push(p1);
-    productsInventory.push(p2);
-    productsInventory.push(p3);
+    let productsInventory: Product[] = []
+    productsInventory.push(p1, p2, p3);
 
     console.log("Initial inventory: ")
     for (const product of productsInventory) {
